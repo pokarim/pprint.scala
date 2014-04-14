@@ -5,6 +5,7 @@ import scala.Console.withOut
 import java.io.Writer
 import java.io.ByteArrayOutputStream
 import com.pokarim.pprint._
+import com.pokarim.pprint.ColorUtil//.getLen
 
 class PPrintSpec extends Specification {
 
@@ -21,7 +22,12 @@ class PPrintSpec extends Specification {
   }
 
   "The 'Hello world' string" should {
-
+	"ColoUtil.getLen" in {
+	  import ColorUtil._
+	  List("List","Hoge(").forall(
+		(s) =>getLen(s) == getLen(withColor(10,s))) === 
+		true
+	}
 	"getOutput" in {
 	  getOutput(println("xx")) === "xx\n"
 	  getOutput(print("yy")) === "yy"

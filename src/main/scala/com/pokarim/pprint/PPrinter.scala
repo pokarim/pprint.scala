@@ -15,123 +15,10 @@
  *  */
 
 package com.pokarim.pprint
-import scala.annotation.tailrec
-import scala.collection.immutable
 
-object ColorUtil{
-  def withColor(c:scala.Int,s:String,args: Any*) = {
-	if (!enableColor.value) s
-	else if (c < 8) "\033[3%sm%s\033[39m" format(c,s) format(args : _*)
-	else "\033[38;5;%sm%s\033[39m" format(c,s) format(args : _*)
-
-  }
-  def getLen(s:String) = s.replaceAll(
-	"\033\\[[^m]+m",""
-  ).length
-  assert(
-	List("List","Hoge(").forall((s) =>getLen(s) == getLen(withColor(10,s)))
-  )
-}
-import ColorUtil.getLen
-object `package`{
-  import scala.util.DynamicVariable
-  val enableColor = new DynamicVariable[Boolean](true)
-
-
-  import PPrinter._
-import ColorUtil._
-  import scala.collection
-  trait DOC {
-	def toPretty(w:Int):String = pretty(w, this)
-	def count(w:Int):Int = layoutStream(best(w,0,this)).length
-	def join(xs: Seq[DOC]) = folddoc((_ <> this <> _),xs)
-
-  }
-  object DOC{
-	import scala.collection.mutable.ArrayBuffer
-	import scala.language.implicitConversions
-	implicit def Option2Doc[A <% DOC](x:Option[A]):DOC = x match {
-	  case None => TEXT("None")
-	  case Some(a) => labeledRBracketWC("Some", List(a:DOC))
-	}
-	implicit def String2Doc(x:String):DOC = TEXT(withColor(2, "\"%s\"" ,x))
-	implicit def Any2Doc(x:Any):DOC = TEXT(x.toString)
-	implicit def Pair2Doc[A <% DOC,B <% DOC](x:(A,B)) = x match{
-	  case (x, y) => group((x:DOC) <> LINE <> NEST(3, TEXT(
-		withColor(builtinColor,"-> ")) <> y))
-	}
-
-	implicit def Tup32Doc[A <% DOC,B <% DOC,C <% DOC](x:(A,B,C)) = x match{
-	   case (x, y, z) => 
-	 	group(
-	 	  (x:DOC) <>  NEST(3, LINE <> 
-						   TEXT(withColor(builtinColor,"-> "))
-						   <> Pair2Doc((y,z)) ))
-	 }
-	  
-	implicit def Map2Doc[A <% DOC,B <% DOC](xs:immutable.Map[A,B]):DOC =
-	  labeledRBracketWC("Map", xs.toSeq,builtinColor)
-	implicit def List2Doc[A <% DOC](xs:List[A]):DOC = 
-	  labeledRBracketWC("List", xs,builtinColor)
-	implicit def Set2Doc[A <% DOC](xs:collection.Set[A]):DOC = 
-	  labeledRBracketWC("Set", xs.toSeq,builtinColor)
-	implicit def ArrayBuffer2Doc[A <% DOC](xs:ArrayBuffer[A]):DOC = 
-	  labeledRBracketWC("ArrayBuffer", xs,builtinColor)
-	implicit def Stream2Doc[A <% DOC](xs:Stream[A]):DOC = 
-	  labeledRBracketWC("Stream", xs,builtinColor)
-
-	val builtinColor = 12//75
-
-	implicit def Seq2Doc[A <% DOC](xs:Seq[A]):DOC = 
- 
-	  (xs : @unchecked) match {
-		case xs : ArrayBuffer[_] => ArrayBuffer2Doc[A](xs.asInstanceOf[ArrayBuffer[A]])
-		case xs : List[_] => List2Doc[A](xs.asInstanceOf[List[A]])
-		case _ :Stream[_] => Stream2Doc[A](xs.asInstanceOf[Stream[A]])
-		case _ => labeledRBracketWC(xs.getClass.getName, xs)
-
-	  }
-
-  }
-  import PPrinter._
-  def pprn1[A <% DOC ](x : A): A = {pprn(x);x}
-  def pprn1[A <% DOC,B <% DOC ](x : A,y :B): B = {pprn(x,y);y}
-  def pprn(xs : DOC*){
-	if (dopprn.value){
-	  println(toPrettyString(xs:_*))
-	}
-  }
-  def toPrettyString(xs : DOC*):String = {
-	val d = fill(xs) // <> LINE
-	return d.toPretty(90)
-  }
-  import scala.util.DynamicVariable
-  val dopprn = new DynamicVariable[Boolean](true)
-}
-
-
-
-trait Pretty[A]{
-  def toDOC(a: A):DOC
-}
-
-trait Pretty2{
-  def toDOC:DOC
-}
-
-object Pretty{
-  import PPrinter._
-
-  def pretty[A](f: A =>DOC):Pretty[A] = new Pretty[A]{
-	def toDOC(a: A) = f(a)
-  }
-
-  implicit def StringPretty:Pretty[String] = pretty((x) => TEXT("\"%s\"" format x))
-
-}
 object PPrinter {
   import scala.language.implicitConversions
-
+  import ColorUtil._
   import Stream._
   import Docs._
   def group (x:DOC):DOC = flatten(x) :<|> x
@@ -184,7 +71,6 @@ object PPrinter {
   def labeledBracketWC2[A <% DOC](left:String,body:Seq[A],right:String,c:DOC=TEXT(",")) =
 	labeledBracket2(left, joinWComma(body.map((x:A) => x:DOC), c), right)
 
-import ColorUtil.withColor
   def labeledRBracketWC[A <% DOC](left:String,body:Seq[A],col:Int=7) =
 	labeledBracketWC(withColor(col,left+ "(") , body, 
 					 withColor(col,")"),TEXT(withColor(col,",")))
@@ -241,36 +127,6 @@ import ColorUtil.withColor
   class :<|> (_l: => DOC, _r: =>DOC) extends DOC{
 	def l = _l
 	def r = _r
-  }
-
-}
-object Docs {
-  import scala.language.implicitConversions
-  trait Doc
-  class StringWrapper(s : String){
-	def Text(d: =>Doc): Doc = new Text(s,d)
-  }
-  class IntWrapper(i : Int){
-	def Line(d: =>Doc): Doc = new Line(i,d)
-  }
-  class Text(val s:String, _d: =>Doc) extends Doc{
-	def d = _d
-  }
-  object Text {
-	def unapply(t:Text) = Some((t.s,t.d))
-  }
-
-  class Line(val i:Int, _d: =>Doc) extends Doc{
-	def d = _d
-  }
-  object Line {
-	def unapply(x:Line) = Some((x.i,x.d))
-  }
-
-  implicit def stringWrapper(s :String):StringWrapper = new StringWrapper(s)
-  implicit def intWrapper(i :Int):IntWrapper = new IntWrapper(i)
-  object NilDoc extends Doc {
-	override def toString = "Nil"
   }
 
 }
