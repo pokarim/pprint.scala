@@ -18,7 +18,7 @@ package com.pokarim.pprint
  
 object ColorUtil{ 
   def withColor(c:scala.Int,s:String,args: Any*) = {
-	if (!enableColor.value) s
+	if (!enableColor.value) s format(args : _*)
 	else if (c < 8) "\u001b[3%sm%s\u001b[39m" format(c,s) format(args : _*)
 	else "\u001b[38;5;%sm%s\u001b[39m" format(c,s) format(args : _*)
 

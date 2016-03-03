@@ -55,6 +55,8 @@ object DOC{
 	labeledRBracketWC("Map", xs.toSeq,builtinColor)
   implicit def List2Doc[A <% DOC](xs:List[A]):DOC = 
 	labeledRBracketWC("List", xs,builtinColor)
+  implicit def Vector2Doc[A <% DOC](xs:Vector[A]):DOC = 
+	labeledRBracketWC("Vector", xs,builtinColor)
   implicit def Set2Doc[A <% DOC](xs:collection.Set[A]):DOC = 
 	labeledRBracketWC("Set", xs.toSeq,builtinColor)
   implicit def ArrayBuffer2Doc[A <% DOC](xs:ArrayBuffer[A]):DOC = 
@@ -73,5 +75,20 @@ object DOC{
 	  case _ => labeledRBracketWC(xs.getClass.getName, xs)
 
 	}
+  def asProduct1[S <% Product, T1 <% DOC](unapply : S => T1)
+  = (s:S) => {
+    val a = unapply(s)
+	labeledRBracketWC(s.productPrefix, List[DOC](a),builtinColor)
+  }
+  def asProduct2[S <% Product, T1 <% DOC, T2 <% DOC](unapply : S => Product2[T1, T2])
+  = (s:S) => {
+    val (a,b) = unapply(s)
+	labeledRBracketWC(s.productPrefix, List[DOC](a,b),builtinColor)
+  }
+  def asProduct3[S <% Product, T1 <% DOC, T2 <% DOC, T3 <% DOC](unapply : S => Product3[T1, T2, T3])
+  = (s:S) => {
+    val (a,b,c) = unapply(s)
+	labeledRBracketWC(s.productPrefix, List[DOC](a,b,c),builtinColor)
+  }
 
 }

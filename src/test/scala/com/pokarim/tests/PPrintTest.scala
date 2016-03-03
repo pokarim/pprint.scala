@@ -48,6 +48,31 @@ class PPrintSpec extends Specification {
     "pprn" in {
 	  getOutputWithoutColor(pprn(List(1,2,3))) ===
 		"List(1, 2, 3)\n"
+	  getOutputWithoutColor(pprn(Vector(1,2,3))) ===
+		"Vector(1, 2, 3)\n"
+	  getOutputWithoutColor(pprn(ListOfMap01)) === ListOfMap01Str ++ "\n"
+	}
+
+    "case class" in {
+      case class Hoge(a:Int,b:Int,c:String)
+      case class Hog1(a:Int)
+      case class Hog2(a:Int,b:Int)
+      implicit val f3 = DOC.asProduct3(Hoge.unapply(_:Hoge).get)
+      implicit val f2 = DOC.asProduct2(Hog2.unapply(_:Hog2).get)
+      implicit val f1 = DOC.asProduct1(Hog1.unapply(_:Hog1).get )
+      lineWidth.withValue(3){
+        getOutputWithoutColor(pprn(Hoge(1,2,"a"))) ===
+          "Hoge(1,\n     2,\n     \"a\")\n"
+        getOutputWithoutColor(pprn(Hog2(1,2))) === "Hog2(1,\n     2)\n"
+        getOutputWithoutColor(pprn(Hog1(1))) === "Hog1(1)\n"
+      }
+    }
+    "pprn" in {
+      getOutputWithoutColor(pprn("a")) === "\"a\"\n"
+	  getOutputWithoutColor(pprn(List(1,2,3))) ===
+		"List(1, 2, 3)\n"
+	  getOutputWithoutColor(pprn(Vector(1,2,3))) ===
+		"Vector(1, 2, 3)\n"
 	  getOutputWithoutColor(pprn(ListOfMap01)) === ListOfMap01Str ++ "\n"
 	}
 
