@@ -19,11 +19,11 @@ package com.pokarim.pprint
 object ColorUtil{ 
   def withColor(c:scala.Int,s:String,args: Any*) = {
 	if (!enableColor.value) s
-	else if (c < 8) "\033[3%sm%s\033[39m" format(c,s) format(args : _*)
-	else "\033[38;5;%sm%s\033[39m" format(c,s) format(args : _*)
+	else if (c < 8) "\u001b[3%sm%s\u001b[39m" format(c,s) format(args : _*)
+	else "\u001b[38;5;%sm%s\u001b[39m" format(c,s) format(args : _*)
 
   }
   def getLen(s:String) = s.replaceAll(
-	"\033\\[[^m]+m",""
+	"\u001b\\[[^m]+m",""
   ).length
 }
